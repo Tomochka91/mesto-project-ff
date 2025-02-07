@@ -3,9 +3,6 @@ import { createCard, deleteCard, likeCard } from "./card.js";
 import { openModal, closeModal } from "./modal.js";
 import "../pages/index.css";
 
-// @todo: Темплейт карточки
-export const cardTemplate = document.querySelector("#card-template").content;
-
 // @todo: DOM узлы
 const placesList = document.querySelector(".places__list");
 const popupEdit = document.querySelector(".popup_type_edit");
@@ -43,25 +40,31 @@ addButton.addEventListener("click", () => {
 
 // Закрыть поп-ап
 popups.forEach((item) => {
+  // Закрыть по крестику
   item.addEventListener("click", (evt) => {
-    // Закрыть по крестику
     if (evt.target.classList.contains("popup__close")) {
       closeModal(item);
     }
-    // Закрыть по клику на оверлей
-    if (evt.currentTarget === evt.target) {
+  });
+  // Закрыть по клику на оверлей
+  item.addEventListener("mousedown", (evt) => {
+    if (evt.target.classList.contains("popup")) {
       closeModal(item);
     }
+    // тоже рабочий вариант
+    // if (evt.currentTarget === evt.target) {
+    //   closeModal(item);
+    // }
   });
 });
 
 // Обработчик клика по картинке карточки.
 // Передаётся колбэком в функцию создания карточки
-function openImagePopup(name, img) {
+function openImagePopup(name, link) {
   openModal(popupImage);
   popupImgCaption.textContent = name;
-  popupImgLink.src = img.src;
-  popupImgLink.alt = img.alt;
+  popupImgLink.alt = name;
+  popupImgLink.src = link;
 }
 
 // Заполнение формы Редактирования профиля при открытии
@@ -89,9 +92,10 @@ formEdit.addEventListener("submit", handleEditFormSubmit);
 // Обработчик ввода данных формы добавления новой карточки
 function handleNewPlaceFormSubmit(evt) {
   evt.preventDefault();
-  const newCardContent = {};
-  newCardContent.name = placeName.value;
-  newCardContent.link = placeLink.value;
+  const newCardContent = {
+    name: placeName.value,
+    link: placeLink.value,
+  };
 
   placesList.prepend(
     createCard(newCardContent, deleteCard, openImagePopup, likeCard)

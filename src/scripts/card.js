@@ -1,33 +1,33 @@
-// const cardTemplate = document.querySelector("#card-template").content;
-import { cardTemplate } from "./index.js";
+// @todo: Темплейт карточки
+const cardTemplate = document.querySelector("#card-template").content;
 
 // Функция создания карточки
 function createCard(cardContent, deleteCardCb, openImagePopupCb, likeCardCb) {
-  const cardElement = cardTemplate.cloneNode(true);
+  const cardElement = cardTemplate.querySelector(".card").cloneNode(true);
   const cardImage = cardElement.querySelector(".card__image");
+  const deleteButton = cardElement.querySelector(".card__delete-button");
+  const likeButton = cardElement.querySelector(".card__like-button");
 
   cardImage.src = cardContent.link;
-  cardImage.alt = `На фото: ${cardContent.name}`;
+  cardImage.alt = cardContent.name;
   cardElement.querySelector(".card__title").textContent = cardContent.name;
 
-  const deleteButton = cardElement.querySelector(".card__delete-button");
-  deleteButton.addEventListener("click", deleteCardCb);
-
-  cardImage.addEventListener("click", () => {
-    openImagePopupCb(cardContent.name, cardImage);
+  deleteButton.addEventListener("click", () => {
+    deleteCardCb(cardElement);
   });
 
-  const likeButton = cardElement.querySelector(".card__like-button");
+  cardImage.addEventListener("click", () => {
+    openImagePopupCb(cardContent.name, cardContent.link);
+  });
+
   likeButton.addEventListener("click", likeCardCb);
 
   return cardElement;
 }
 
 // Функция удаления карточки
-function deleteCard(evt) {
-  const eventTarget = evt.target;
-
-  eventTarget.parentElement.remove();
+function deleteCard(card) {
+  card.remove();
 }
 
 // Функция лайка карточки
