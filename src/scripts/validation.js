@@ -27,8 +27,10 @@ const hasInvalidInput = (inputList) => {
 const toggleButtonState = (inputList, buttonElement, inactiveButtonClass) => {
   if (hasInvalidInput(inputList)) {
     buttonElement.classList.add(inactiveButtonClass);
+    buttonElement.setAttribute("disabled", true);
   } else {
     buttonElement.classList.remove(inactiveButtonClass);
+    buttonElement.removeAttribute("disabled");
   }
 };
 
@@ -84,10 +86,6 @@ const enableValidation = (valConfig) => {
   formList.forEach((formElement) => {
     formElement.addEventListener("submit", (evt) => {
       evt.preventDefault();
-      // По сабмиту выключаем кнопку
-      formElement
-        .querySelector(valConfig.submitButtonSelector)
-        .classList.add(valConfig.inactiveButtonClass);
     });
     setEventListeners(formElement, valConfig);
   });
@@ -98,15 +96,15 @@ const clearValidation = (formElement, valConfig) => {
   const inputList = Array.from(
     formElement.querySelectorAll(valConfig.inputSelector)
   );
+  const buttonElement = formElement.querySelector(
+    valConfig.submitButtonSelector
+  );
+  toggleButtonState(inputList, buttonElement, valConfig.inactiveButtonClass);
+
   inputList.forEach((inputElement) => {
     inputElement.setCustomValidity("");
     inputElement.value = "";
-    inputElement.classList.remove(valConfig.inputErrorClass);
-  });
-  const errorList = Array.from(formElement.querySelectorAll(".popup__error"));
-  errorList.forEach((errorElement) => {
-    errorElement.classList.remove(valConfig.errorClass);
-    errorElement.textContent = "";
+    hideError(formElement, inputElement, valConfig);
   });
 };
 

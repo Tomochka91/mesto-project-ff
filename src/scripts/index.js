@@ -10,16 +10,18 @@ import {
   deleteCardRq,
   changeAvatarRq,
 } from "./api.js";
+import { handleFormSubmit } from "./utils/utils.js";
+import { valConfig } from "./utils/constants.js";
 import "../pages/index.css";
 
-// данные конфигурации для функции валидации
-const valConfig = {
-  formSelector: ".popup__form",
-  inputSelector: ".popup__input",
-  submitButtonSelector: ".popup__button",
-  inactiveButtonClass: "popup__button_disabled",
-  inputErrorClass: "popup__input_type_error",
-  errorClass: "popup__error_visible",
+// Создадим объект колбэков
+// Могу ли я импортировать Реквесты из api.js в card.js?
+const cardCbOptions = {
+  deleteCardCb: deleteCard,
+  openImagePopupCb: openImagePopup,
+  putLikeRq: putLikeRq,
+  deleteLikeRq: deleteLikeRq,
+  deleteCardRq: deleteCardRq,
 };
 
 // DOM узлы
@@ -57,22 +59,17 @@ Promise.all(promises)
 
     // отрисовка карточек
     cards.forEach((element) => {
-      placesList.append(
-        createCard(
-          element,
-          myProfile._id,
-          deleteCard,
-          openImagePopup,
-          putLikeRq,
-          deleteLikeRq,
-          deleteCardRq
-        )
-      );
+      renderCard(element, myProfile._id);
     });
   })
   .catch((err) => {
     console.log(err);
   });
+
+// создадим функцию, которая позволит определить метод вставки карточки
+function renderCard(cardContent, myId, method = "append") {
+  placesList[method](createCard(cardContent, myId, cardCbOptions));
+}
 
 // Открыть поп-ап Редактировать профиль
 editButton.addEventListener("click", () => {
@@ -83,14 +80,24 @@ editButton.addEventListener("click", () => {
 
 // Открыть поп-ап добавления новой карточки
 addButton.addEventListener("click", () => {
-  openModal(popupNewCard, valConfig);
+  clearValidation(popupNewCard, valConfig);
+  openModal(popupNewCard);
 });
 
-//Открыть поп-ап изменения аватара
+// Открыть поп-ап изменения аватара
 editAvatarButton.addEventListener("click", () => {
   clearValidation(popupAvatarEdit, valConfig);
-  openModal(popupAvatarEdit, valConfig);
+  openModal(popupAvatarEdit);
 });
+
+// Открыть поп-ап с картинкой
+// Передаётся колбэком в функцию создания карточки
+function openImagePopup(name, link) {
+  openModal(popupImage);
+  popupImgCaption.textContent = name;
+  popupImgLink.alt = name;
+  popupImgLink.src = link;
+}
 
 // Закрыть поп-ап
 popups.forEach((item) => {
@@ -104,21 +111,8 @@ popups.forEach((item) => {
     if (evt.target.classList.contains("popup")) {
       closeModal(item);
     }
-    // тоже рабочий вариант
-    // if (evt.currentTarget === evt.target) {
-    //   closeModal(item);
-    // }
   });
 });
-
-// Обработчик клика по картинке карточки.
-// Передаётся колбэком в функцию создания карточки
-function openImagePopup(name, link) {
-  openModal(popupImage, valConfig);
-  popupImgCaption.textContent = name;
-  popupImgLink.alt = name;
-  popupImgLink.src = link;
-}
 
 // Заполнение формы Редактирования профиля при открытии
 function getProfile() {
@@ -137,22 +131,14 @@ enableValidation(valConfig);
 
 // Обработчик ввода данных формы Редактирование профиля
 function handleEditFormSubmit(evt) {
-  evt.preventDefault();
-
-  // добавим уведомление пользователя о процессе загрузки данных
-  formEdit.querySelector(".popup__button").textContent = "Сохранение...";
-  editUserDataRq(profileName.value, profileDescription.value)
-    .then((myProfile) => {
-      setProfile(myProfile.name, myProfile.about);
-    })
-    .then(() => {
-      formEdit.querySelector(".popup__button").textContent = "Сохранить";
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-
-  closeModal(popupEdit);
+  function makeRequest() {
+    return editUserDataRq(profileName.value, profileDescription.value).then(
+      (myProfile) => {
+        setProfile(myProfile.name, myProfile.about);
+      }
+    );
+  }
+  handleFormSubmit(makeRequest, evt, closeModal);
 }
 
 // Подтвердить ввод данных формы Редактирование профиля
@@ -160,37 +146,18 @@ formEdit.addEventListener("submit", handleEditFormSubmit);
 
 // Обработчик ввода данных формы добавления новой карточки
 function handleNewPlaceFormSubmit(evt) {
-  evt.preventDefault();
-  const newCardContent = {
-    name: placeName.value,
-    link: placeLink.value,
-  };
-  formNewPlace.querySelector(".popup__button").textContent = "Сохранение...";
-
-  postNewCardRq(newCardContent.name, newCardContent.link)
-    .then((cardContent) => {
-      placesList.prepend(
-        createCard(
-          cardContent,
-          cardContent.owner._id,
-          deleteCard,
-          openImagePopup,
-          putLikeRq,
-          deleteLikeRq,
-          deleteCardRq
-        )
-      );
-    })
-    .then(() => {
-      formNewPlace.querySelector(".popup__button").textContent = "Сохранить";
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-
-  clearValidation(formNewPlace, valConfig);
-  formNewPlace.reset();
-  closeModal(popupNewCard);
+  function makeRequest() {
+    const newCardContent = {
+      name: placeName.value,
+      link: placeLink.value,
+    };
+    return postNewCardRq(newCardContent.name, newCardContent.link).then(
+      (cardContent) => {
+        renderCard(cardContent, cardContent.owner._id, "prepend");
+      }
+    );
+  }
+  handleFormSubmit(makeRequest, evt, closeModal);
 }
 
 // Подтвердить добавление новой карточки
@@ -198,19 +165,12 @@ formNewPlace.addEventListener("submit", handleNewPlaceFormSubmit);
 
 // Обработчик отправки аватара на сервер и отрисовки на странице
 function handleAvatarEditSubmit(evt) {
-  evt.preventDefault();
-  formAvatarEdit.querySelector(".popup__button").textContent = "Сохранение...";
-
-  changeAvatarRq(formAvatarEditlink.value)
-    .then((avatar) => {
+  function makeRequest() {
+    return changeAvatarRq(formAvatarEditlink.value).then((avatar) => {
       profileImage.style = `background-image: url('${avatar.avatar}')`;
-    })
-    .catch((err) => {
-      console.log(err);
     });
-  clearValidation(formAvatarEdit, valConfig);
-  formAvatarEdit.reset();
-  closeModal(popupAvatarEdit);
+  }
+  handleFormSubmit(makeRequest, evt, closeModal);
 }
 
 // подтвердить замену аватара

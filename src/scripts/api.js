@@ -1,4 +1,7 @@
+import { checkResponse } from "./utils/utils.js";
+
 // Создадим исходные данные для формирования запросов
+// это нужно в constants.js переносить?
 const dataConfig = {
   baseUrl: "https://mesto.nomoreparties.co/v1/wff-cohort-33",
   headers: {
@@ -7,30 +10,21 @@ const dataConfig = {
   },
 };
 
+function request(endpoint, options) {
+  return fetch(`${dataConfig.baseUrl}${endpoint}`, options).then(checkResponse);
+}
+
 // подключимся к серверу для получения исходных карточек
 const getInitialCardsRq = () => {
-  return fetch(`${dataConfig.baseUrl}/cards`, {
+  return request("/cards", {
     headers: dataConfig.headers,
-  }).then((res) => {
-    if (res.ok) {
-      return res.json();
-    }
-
-    //если ошибка отклоним промис
-    return Promise.reject(`Ошибка: ${res.status}`);
   });
 };
 
 // подключимся к серверу для получения моих данных
 const getUserIdRq = () => {
-  return fetch(`${dataConfig.baseUrl}/users/me`, {
+  return request("/users/me", {
     headers: dataConfig.headers,
-  }).then((res) => {
-    if (res.ok) {
-      return res.json();
-    }
-    //если ошибка отклоним промис
-    return Promise.reject(`Ошибка: ${res.status}`);
   });
 };
 
@@ -38,95 +32,59 @@ export const promises = [getInitialCardsRq(), getUserIdRq()];
 
 // отправим на сервер данные отредактированного профиля
 export const editUserDataRq = (profileName, profileDescription) => {
-  return fetch(`${dataConfig.baseUrl}/users/me`, {
+  return request("/users/me", {
     method: "PATCH",
     headers: dataConfig.headers,
     body: JSON.stringify({
       name: profileName,
       about: profileDescription,
     }),
-  }).then((res) => {
-    if (res.ok) {
-      return res.json();
-    }
-
-    return Promise.reject(`Ошибка: ${res.status}`);
   });
 };
 
 // отправка на сервер данных новой карточки
 export const postNewCardRq = (cardName, cardLink) => {
-  return fetch(`${dataConfig.baseUrl}/cards`, {
+  return request("/cards", {
     method: "POST",
     headers: dataConfig.headers,
     body: JSON.stringify({
       name: cardName,
       link: cardLink,
     }),
-  }).then((res) => {
-    if (res.ok) {
-      return res.json();
-    }
-
-    return Promise.reject(`Ошибка: ${res.status}`);
   });
 };
 
 // удаление карточки с сервера
 export const deleteCardRq = (cardId) => {
-  return fetch(`${dataConfig.baseUrl}/cards/${cardId}`, {
+  return request(`/cards/${cardId}`, {
     method: "DELETE",
     headers: dataConfig.headers,
-  }).then((res) => {
-    if (res.ok) {
-      return res.json();
-    }
-
-    return Promise.reject(`Ошибка: ${res.status}`);
   });
 };
 
 // отправка данных на сервер о поставленном лайке
 export const putLikeRq = (cardId) => {
-  return fetch(`${dataConfig.baseUrl}/cards/likes/${cardId}`, {
+  return request(`/cards/likes/${cardId}`, {
     method: "PUT",
     headers: dataConfig.headers,
-  }).then((res) => {
-    if (res.ok) {
-      return res.json();
-    }
-
-    return Promise.reject(`Ошибка: ${res.status}`);
   });
 };
 
 // удаление поставленного лайка с сервера
 export const deleteLikeRq = (cardId) => {
-  return fetch(`${dataConfig.baseUrl}/cards/likes/${cardId}`, {
+  return request(`/cards/likes/${cardId}`, {
     method: "DELETE",
     headers: dataConfig.headers,
-  }).then((res) => {
-    if (res.ok) {
-      return res.json();
-    }
-
-    return Promise.reject(`Ошибка: ${res.status}`);
   });
 };
 
 // отправка на сервер измененного аватара
 export const changeAvatarRq = (profileAvatar) => {
-  return fetch(`${dataConfig.baseUrl}/users/me/avatar`, {
+  return request("/users/me/avatar", {
     method: "PATCH",
     headers: dataConfig.headers,
     body: JSON.stringify({
       avatar: profileAvatar,
     }),
-  }).then((res) => {
-    if (res.ok) {
-      return res.json();
-    }
-
-    return Promise.reject(`Ошибка: ${res.status}`);
   });
 };

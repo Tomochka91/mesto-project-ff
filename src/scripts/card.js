@@ -5,11 +5,7 @@ const cardTemplate = document.querySelector("#card-template").content;
 function createCard(
   cardContent,
   myId,
-  deleteCardCb,
-  openImagePopupCb,
-  putLikeRq,
-  deleteLikeRq,
-  deleteRq
+  { deleteCardCb, openImagePopupCb, putLikeRq, deleteLikeRq, deleteCardRq }
 ) {
   const cardElement = cardTemplate.querySelector(".card").cloneNode(true);
   const cardImage = cardElement.querySelector(".card__image");
@@ -24,7 +20,7 @@ function createCard(
   if (myId === cardContent.owner._id) {
     // Если карточка моя, то я могу её удалить
     deleteButton.addEventListener("click", () => {
-      deleteRq(cardContent._id)
+      deleteCardRq(cardContent._id)
         .then(() => {
           deleteCardCb(cardElement);
         })

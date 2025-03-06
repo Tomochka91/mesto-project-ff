@@ -1,5 +1,9 @@
+/*import { valConfig } from "./utils/constants.js";*/
+
 // Функция открытия поп-апа
-function openModal(item) {
+function openModal(item /*clearValidationCb*/) {
+  // Не во всех модальных окнах есть поля ввода и валидация
+  // clearValidationCb(item, valConfig);
   item.classList.toggle("popup_is-opened");
   document.addEventListener("keydown", keyHandler);
 }
